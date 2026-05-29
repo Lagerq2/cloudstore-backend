@@ -1,7 +1,7 @@
 {
   "AWSEBDockerrunVersion": "1",
   "Image": {
-    "Name": "lagerqvist/cloudstore.backend:latest",
+    "Name": "lagerqvist/cloudstore-backend:latest",
     "Update": "true"
   },
   "Ports": [
