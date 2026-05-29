@@ -93,7 +93,8 @@ public class SecurityConfig {
                     "http://localhost:5000",
                     "http://localhost:8081",
                     "http://localhost:5500",
-                    "http://127.0.0.1:5500"
+                    "http://127.0.0.1:5500",
+                    "http://cloudstore-frontend-s3.s3-website.eu-north-1.amazonaws.com"
                     ));
 
             config.setAllowedMethods(List.of(
