@@ -6,42 +6,48 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Klonar koden från GitHub
-    - name: Checkout source code
-      uses: actions/checkout@v4
-
-    # 2. Sätter upp Java
+      # 2. Sätter upp Java
+    - uses: actions/checkout@v4
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
 
-    # 3. Skapa zip-filen som Elastic Beanstalk kräver för Docker-miljöer
-    - name: Generate Deployment Package
-      run: |
-        zip -r deploy.zip Dockerfile pom.xml src/
+    - name: Run Tests
+      run: mvn clean test
 
-    # 4. Konfigurera AWS-autentisering via Github Secrets
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
+    - name: Login to Dockerhub
+      uses: docker/login-action@v3
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: eu-north-1
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and Push
+      run: |
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME}}/cloudstore-backend:latest .
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/cloudstore-backend:latest
+
+  deploy:
+     needs: build-and-push
+     runs-on: ubuntu-latest
+     steps:
+       - uses: actions/checkout@v4
+       - name: Prepare deployment
+         run: cp Dockerrun.aws.json deploy.zip
 
     # 5. Ladda upp och distribuera till Elastic Beanstalks
-    - name: Deploy to AWS Elastic Beanstalk
-      uses: einaregilsson/beanstalk-deploy@v22
-      with:
-        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        application_name: 'cloudstore-backend'
-        environment_name: 'Cloudstorebackend-env'
-        version_label: 'deploy-${{ github.sha }}'
-        region: eu-north-1
-        deployment_package: deploy.zip
+       - name: Deploy to Elastic Beanstalk
+         uses: einaregilsson/beanstalk-deploy@v22
+         with:
+           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+           application_name: 'cloudstore-backend'
+           environment_name: 'Cloudstorebackend-env'
+           version_label: 'deploy-${{ github.sha }}'
+           region: eu-north-1
+           deployment_package: deploy.zip
