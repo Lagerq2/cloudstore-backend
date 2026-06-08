@@ -90,7 +90,8 @@ public class SecurityConfig {
             CorsConfiguration config = new CorsConfiguration();
 
             config.setAllowedOrigins(List.of(
-                    "http://cloudstore-frontend-s3.s3-website.eu-north-1.amazonaws.com"
+                    "http://cloudstore-frontend-s3.s3-website.eu-north-1.amazonaws.com",
+                    "http://127.0.0.1:5500", "http://localhost:5500"
                     ));
 
             config.setAllowedMethods(List.of(
